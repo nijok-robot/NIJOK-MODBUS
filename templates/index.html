@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control ESP32</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Iconos de Lucide (versión CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Encabezado -->
+        <header class="main-header">
+            <div class="container">
+                <div class="logo">
+                    <div class="logo-circle">NJK</div>
+                    <h1 class="gradient-text">Nijok Robot - Panel de control</h1>
+                </div>
+
+
+                <div class="nav-buttons">
+                    <!-- Theme Selector -->
+                    <div class="theme-selector">
+                        <button id="theme-btn" class="btn btn-icon">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </button>
+                        <div id="theme-dropdown" class="dropdown-menu">
+                            <button data-theme="light" class="theme-option">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="5"></circle>
+                                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </svg>
+                                Light Mode
+                            </button>
+                            <button data-theme="dark" class="theme-option active">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </svg>
+                                Dark Mode
+                            </button>
+                            <button data-theme="cyberpunk" class="theme-option">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                                </svg>
+                                Cyberpunk
+                            </button>
+                            <button data-theme="nature" class="theme-option">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path>
+                                    <line x1="4" y1="21" x2="20" y2="21"></line>
+                                </svg>
+                                Nature
+                            </button>
+                            <button data-theme="terminal" class="theme-option">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="4 17 10 11 4 5"></polyline>
+                                    <line x1="12" y1="19" x2="20" y2="19"></line>
+                                </svg>
+                                Terminal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="nav-buttons">
+                    <button id="updateButton" class="btn btn-primary">
+                        <i data-lucide="refresh-cw" class="icon"></i>
+                        Actualizar Datos
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Contenido principal -->
+        <div class="dashboard-content">
+            <div class="container">
+                <!-- Mensaje de error (inicialmente oculto) -->
+                <div id="errorPanel" class="panel full-width" style="display: none; background-color: var(--danger); color: white;">
+                    <div class="panel-title">
+                        <i data-lucide="alert-triangle" class="icon"></i>
+                        Error de Conexión
+                    </div>
+                    <p id="errorMessage"></p>
+                </div>
+                
+                <!-- Sección de interruptores booleanos -->
+                <div class="panel full-width">
+                    <div class="panel-title">
+                        <span>Controles del Sistema</span>
+                    </div>
+                    <div class="status-panels">
+                        <!-- Dirección -->
+                        <div class="switch-control">
+                            <div class="info-item">
+                                <span class="info-label">Dirección</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="switch-direction" data-register="direction">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Moverse -->
+                        <div class="switch-control">
+                            <div class="info-item">
+                                <span class="info-label">Moverse</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="switch-move" data-register="move">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Emergencia -->
+                        <div class="switch-control">
+                            <div class="info-item">
+                                <span class="info-label">Emergencia</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="switch-emergency" data-register="emergency">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Manual -->
+                        <div class="switch-control">
+                            <div class="info-item">
+                                <span class="info-label">Manual</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="switch-manual" data-register="manual">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- ESP32_ModBUS -->
+                        <div class="switch-control">
+                            <div class="info-item">
+                                <span class="info-label">ESP32_ModBUS</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="switch-esp32_modbus" data-register="esp32_modbus">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- ESP32_SIM_Internet -->
+                        <div class="switch-control">
+                            <div class="info-item">
+                                <span class="info-label">ESP32_SIM_Internet</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="switch-esp32_sim_internet" data-register="esp32_sim_internet">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección de datos numéricos -->
+                <div class="dashboard-grid">
+                    <!-- Velocidad -->
+                    <div class="panel">
+                        <div class="panel-title">
+                            <i data-lucide="gauge" class="icon"></i>
+                            <span>Velocidad</span>
+                        </div>
+                        <div class="status-panels">
+                            <div class="data-card">
+                                <div class="panel-title">Velocidad de referencia</div>
+                                <div id="reference_speed" class="value">0 RPM</div>
+                            </div>
+                            <div class="data-card">
+                                <div class="panel-title">Velocidad real</div>
+                                <div id="actual_speed" class="value">0 RPM</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Temperatura -->
+                    <div class="panel">
+                        <div class="panel-title">
+                            <i data-lucide="thermometer" class="icon"></i>
+                            <span>Temperatura</span>
+                        </div>
+                        <div class="status-panels">
+                            <div class="data-card">
+                                <div class="panel-title">Temperatura motor 1</div>
+                                <div id="motor1_temp" class="value">0 °C</div>
+                            </div>
+                            <div class="data-card">
+                                <div class="panel-title">Temperatura motor 2</div>
+                                <div id="motor2_temp" class="value">0 °C</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Corriente -->
+                    <div class="panel">
+                        <div class="panel-title">
+                            <i data-lucide="zap" class="icon"></i>
+                            <span>Corriente</span>
+                        </div>
+                        <div class="status-panels">
+                            <div class="data-card">
+                                <div class="panel-title">Corriente motor 1</div>
+                                <div id="motor1_current" class="value">0 A</div>
+                            </div>
+                            <div class="data-card">
+                                <div class="panel-title">Corriente motor 2</div>
+                                <div id="motor2_current" class="value">0 A</div>
+                            </div>
+                            <div class="data-card">
+                                <div class="panel-title">Corriente total</div>
+                                <div id="total_current" class="value">0 A</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Distancia -->
+                    <div class="panel">
+                        <div class="panel-title">
+                            <i data-lucide="navigation" class="icon"></i>
+                            <span>Distancia</span>
+                        </div>
+                        <div class="data-card">
+                            <div class="panel-title">Distancia recorrida</div>
+                            <div id="distance" class="value">0 m</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botón de actualización (móvil) -->
+                <div class="panel-footer">
+                    <button id="updateButtonMobile" class="btn btn-primary btn-block">
+                        <i data-lucide="refresh-cw" class="icon"></i>
+                        Actualizar Datos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript para la funcionalidad -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    
+    <!-- Inicializar iconos de Lucide -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+         
+            // Theme switching
+            const themeBtn = document.getElementById('theme-btn');
+            const themeDropdown = document.getElementById('theme-dropdown');
+            const themeOptions = document.querySelectorAll('.theme-option');
+            const app = document.getElementById('app');
+
+            // Default theme
+            let currentTheme = localStorage.getItem('robot-dashboard-theme') || 'dark';
+            applyTheme(currentTheme);
+
+            // Toggle theme dropdown
+            themeBtn.addEventListener('click', () => {
+                themeDropdown.classList.toggle('active');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!themeBtn.contains(e.target) && !themeDropdown.contains(e.target)) {
+                    themeDropdown.classList.remove('active');
+                }
+            });
+
+            // Theme selection
+            themeOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const theme = option.getAttribute('data-theme');
+                    currentTheme = theme;
+                    localStorage.setItem('robot-dashboard-theme', theme);
+                    applyTheme(theme);
+                    themeDropdown.classList.remove('active');
+
+                    // Update active theme in dropdown
+                    themeOptions.forEach(opt => {
+                        if (opt.getAttribute('data-theme') === theme) {
+                            opt.classList.add('active');
+                        } else {
+                            opt.classList.remove('active');
+                        }
+                    });
+                });
+            });
+
+            function applyTheme(theme) {
+                // Remove all theme classes from body
+                document.body.className = '';
+
+                // Add the selected theme class
+                document.body.classList.add(`theme-${theme}`);
+
+                // Update theme icon
+                updateThemeIcon(theme);
+            }
+
+            function updateThemeIcon(theme) {
+                const iconElement = themeBtn.querySelector('svg');
+
+                // Update icon path based on theme
+                switch(theme) {
+                    case 'light':
+                        updateSVGPath(iconElement, 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+                        break;
+                    case 'dark':
+                        updateSVGPath(iconElement, 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+                        break;
+                    case 'cyberpunk':
+                        updateSVGPath(iconElement, 'M4 6h16M4 12h16M4 18h16');
+                        break;
+                    case 'nature':
+                        updateSVGPath(iconElement, 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z');
+                        break;
+                    case 'terminal':
+                        updateSVGPath(iconElement, 'M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z');
+                        break;
+                    default:
+                        updateSVGPath(iconElement, 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+                }
+            }
+
+            function updateSVGPath(iconElement, pathData) {
+                // Clear existing paths
+                while (iconElement.firstChild) {
+                    iconElement.removeChild(iconElement.firstChild);
+                }
+
+                // Create new path
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', 'currentColor');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('stroke-linecap', 'round');
+                path.setAttribute('stroke-linejoin', 'round');
+
+                iconElement.appendChild(path);
+            }
+        });
+    
+
+    </script>
+</body>
+</html>
