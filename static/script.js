@@ -23,6 +23,12 @@ let panelData = {
     distance: 0
 };
 
+// Configuración de conexión
+let connectionConfig = {
+    serialPort: '',
+    referenceSpeed: 0
+};
+
 // Unidades para los valores numéricos
 const units = {
     reference_speed: 'RPM',
@@ -40,19 +46,208 @@ const updateButton = document.getElementById('updateButton');
 const updateButtonMobile = document.getElementById('updateButtonMobile');
 const errorPanel = document.getElementById('errorPanel');
 const errorMessage = document.getElementById('errorMessage');
+const serialPortSelect = document.getElementById('serial-port');
+const referenceSpeedSelect = document.getElementById('reference-speed');
+const applyConfigButton = document.getElementById('apply-config');
 
 // Inicialización cuando el DOM está listo
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+    
+     // Cargar puertos seriales disponibles
+     fetchSerialPorts();
+    
+     // Cargar opciones de velocidad de referencia
+     fetchReferenceSpeedOptions();
+
     // Cargar datos iniciales
     fetchData();
     
     // Configurar eventos para los botones de actualización
     updateButton.addEventListener('click', fetchData);
     updateButtonMobile.addEventListener('click', fetchData);
+
+    // Configurar evento para el botón de aplicar configuración
+    applyConfigButton.addEventListener('click', applyConfiguration);
     
     // Configurar eventos para los interruptores
     setupSwitches();
 });
+
+
+/**
+ * Obtiene la lista de puertos seriales disponibles
+ */
+async function fetchSerialPorts() {
+    try {
+        const response = await fetch('/api/serial_ports');
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Limpiar opciones actuales
+        serialPortSelect.innerHTML = '';
+        
+        // Añadir opciones de puertos
+        if (data.ports && data.ports.length > 0) {
+            data.ports.forEach(port => {
+                const option = document.createElement('option');
+                option.value = port;
+                option.textContent = port;
+                serialPortSelect.appendChild(option);
+            });
+            
+            // Seleccionar el puerto actual si existe
+            if (data.current_port) {
+                serialPortSelect.value = data.current_port;
+                connectionConfig.serialPort = data.current_port;
+            }
+        } else {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No hay puertos disponibles';
+            serialPortSelect.appendChild(option);
+        }
+    } catch (error) {
+        console.error('Error al obtener puertos seriales:', error);
+        
+        // Opción de error
+        serialPortSelect.innerHTML = '';
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Error al cargar puertos';
+        serialPortSelect.appendChild(option);
+    }
+}
+
+/**
+ * Obtiene las opciones de velocidad de referencia disponibles
+ */
+async function fetchReferenceSpeedOptions() {
+    try {
+        const response = await fetch('/api/reference_speed_options');
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Limpiar opciones actuales
+        referenceSpeedSelect.innerHTML = '';
+        
+        // Añadir opciones de velocidad
+        if (data.options && data.options.length > 0) {
+            data.options.forEach(speed => {
+                const option = document.createElement('option');
+                option.value = speed;
+                option.textContent = `${speed} RPM`;
+                referenceSpeedSelect.appendChild(option);
+            });
+            
+            // Seleccionar la velocidad actual si existe
+            if (data.current_speed !== undefined) {
+                referenceSpeedSelect.value = data.current_speed;
+                connectionConfig.referenceSpeed = data.current_speed;
+            }
+        } else {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No hay opciones disponibles';
+            referenceSpeedSelect.appendChild(option);
+        }
+    } catch (error) {
+        console.error('Error al obtener opciones de velocidad:', error);
+        
+        // Opción de error
+        referenceSpeedSelect.innerHTML = '';
+        
+        // Añadir opciones predeterminadas en caso de error
+        const defaultSpeeds = [0, 100, 200, 300, 400, 500, 750, 1000, 1500, 2000];
+        defaultSpeeds.forEach(speed => {
+            const option = document.createElement('option');
+            option.value = speed;
+            option.textContent = `${speed} RPM`;
+            referenceSpeedSelect.appendChild(option);
+        });
+        
+        // Mostrar notificación de error
+        showToast('Error al cargar opciones de velocidad. Usando valores predeterminados.', 'error');
+    }
+}
+
+/**
+ * Aplica la configuración seleccionada
+ */
+async function applyConfiguration() {
+    const selectedPort = serialPortSelect.value;
+    const selectedSpeed = parseInt(referenceSpeedSelect.value, 10);
+    
+    if (!selectedPort) {
+        showToast('Por favor, seleccione un puerto serial', 'error');
+        return;
+    }
+    
+    if (isNaN(selectedSpeed)) {
+        showToast('Por favor, seleccione una velocidad válida', 'error');
+        return;
+    }
+    
+    // Deshabilitar botón mientras se aplica la configuración
+    applyConfigButton.disabled = true;
+    
+    try {
+        // Enviar configuración al servidor
+        const response = await fetch('/api/apply_configuration', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                serial_port: selectedPort,
+                reference_speed: selectedSpeed
+            }),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Actualizar configuración local
+            connectionConfig.serialPort = selectedPort;
+            connectionConfig.referenceSpeed = selectedSpeed;
+            
+            // Actualizar datos del panel
+            fetchData();
+            
+            // Mostrar mensaje de éxito
+            showToast('Configuración aplicada correctamente', 'success');
+            
+            // Si hay una advertencia, mostrarla también
+            if (result.warning) {
+                setTimeout(() => {
+                    showToast(`Advertencia: ${result.warning}`, 'warning');
+                }, 1000);
+            }
+        } else {
+            throw new Error(result.error || 'Error desconocido');
+        }
+    } catch (error) {
+        console.error('Error al aplicar configuración:', error);
+        showToast(`Error: ${error.message}`, 'error');
+    } finally {
+        // Restaurar botón
+        applyConfigButton.disabled = false;
+    }
+}
+
+
+
 
 /**
  * Configura los eventos para los interruptores booleanos
@@ -186,7 +381,7 @@ function updateUI() {
 /**
  * Muestra una notificación toast
  * @param {string} message - Mensaje a mostrar
- * @param {string} type - Tipo de notificación ('success' o 'error')
+ * @param {string} type - Tipo de notificación ('success', 'error', 'warning')
  */
 function showToast(message, type) {
     // Crear elemento toast
@@ -194,14 +389,38 @@ function showToast(message, type) {
     toast.className = 'toast';
     
     // Icono según el tipo
-    const iconName = type === 'success' ? 'check-circle' : 'alert-circle';
+    let iconName, title;
+    switch (type) {
+        case 'success':
+            iconName = 'check-circle';
+            title = 'Éxito';
+            break;
+        case 'warning':
+            iconName = 'alert-triangle';
+            title = 'Advertencia';
+            break;
+        case 'error':
+        default:
+            iconName = 'alert-circle';
+            title = 'Error';
+            break;
+    }
+    
+    // Añadir clase de color según el tipo
+    if (type === 'warning') {
+        toast.style.borderLeft = '4px solid var(--warning)';
+    } else if (type === 'error') {
+        toast.style.borderLeft = '4px solid var(--danger)';
+    } else {
+        toast.style.borderLeft = '4px solid var(--success)';
+    }
     
     toast.innerHTML = `
-        <div class="toast-icon">
+        <div class="toast-icon" style="color: ${type === 'warning' ? 'var(--warning)' : (type === 'error' ? 'var(--danger)' : 'var(--success)')}">
             <i data-lucide="${iconName}"></i>
         </div>
         <div class="toast-content">
-            <h4>${type === 'success' ? 'Éxito' : 'Error'}</h4>
+            <h4>${title}</h4>
             <p>${message}</p>
         </div>
     `;
@@ -213,7 +432,8 @@ function showToast(message, type) {
     lucide.createIcons({
         icons: {
             'check-circle': {},
-            'alert-circle': {}
+            'alert-circle': {},
+            'alert-triangle': {}
         },
         attrs: {
             class: ['icon']

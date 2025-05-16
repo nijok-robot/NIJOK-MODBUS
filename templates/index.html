@@ -7,6 +7,61 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- Iconos de Lucide (versión CDN) -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilos para los selectores */
+        .select-container {
+            margin-bottom: 1rem;
+        }
+        
+        .select-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .select-wrapper {
+            position: relative;
+        }
+        
+        .custom-select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--background-alt);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            appearance: none;
+            cursor: pointer;
+        }
+        
+        .select-icon {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        
+        .config-panel {
+            margin-bottom: 1.5rem;
+        }
+        
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .apply-btn {
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
     <div class="dashboard">
@@ -17,7 +72,6 @@
                     <div class="logo-circle">NJK</div>
                     <h1 class="gradient-text">Nijok Robot - Panel de control</h1>
                 </div>
-
 
                 <div class="nav-buttons">
                     <!-- Theme Selector -->
@@ -74,7 +128,6 @@
                     </div>
                 </div>
 
-
                 <div class="nav-buttons">
                     <button id="updateButton" class="btn btn-primary">
                         <i data-lucide="refresh-cw" class="icon"></i>
@@ -94,6 +147,45 @@
                         Error de Conexión
                     </div>
                     <p id="errorMessage"></p>
+                </div>
+                
+                <!-- Panel de configuración Modbus -->
+                <div class="panel full-width config-panel">
+                    <div class="panel-title">
+                        <i data-lucide="settings" class="icon"></i>
+                        <span>Configuración de Conexión</span>
+                    </div>
+                    <div class="config-grid">
+                        <!-- Selector de Puerto Serial -->
+                        <div class="select-container">
+                            <label for="serial-port">Puerto Serial:</label>
+                            <div class="select-wrapper">
+                                <select id="serial-port" class="custom-select">
+                                    <option value="">Cargando puertos...</option>
+                                </select>
+                                <div class="select-icon">
+                                    <i data-lucide="chevron-down" class="icon"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Selector de Velocidad de Referencia -->
+                        <div class="select-container">
+                            <label for="reference-speed">Velocidad de Referencia:</label>
+                            <div class="select-wrapper">
+                                <select id="reference-speed" class="custom-select">
+                                    <option value="">Cargando opciones...</option>
+                                </select>
+                                <div class="select-icon">
+                                    <i data-lucide="chevron-down" class="icon"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="apply-config" class="btn btn-primary apply-btn">
+                        <i data-lucide="check" class="icon"></i>
+                        Aplicar Configuración
+                    </button>
                 </div>
                 
                 <!-- Sección de interruptores booleanos -->
@@ -260,6 +352,8 @@
     <!-- Inicializar iconos de Lucide -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar iconos
+            lucide.createIcons();
          
             // Theme switching
             const themeBtn = document.getElementById('theme-btn');
@@ -357,8 +451,6 @@
                 iconElement.appendChild(path);
             }
         });
-    
-
     </script>
 </body>
 </html>

@@ -10,6 +10,7 @@ Modbus RTU a través de un puerto serie.
 
 import time
 import logging
+import serial.tools.list_ports
 from pymodbus.client import ModbusSerialClient
 from pymodbus.exceptions import ModbusException, ConnectionException
 
@@ -43,6 +44,15 @@ REGISTER_MAP = {
     'total_current': (6, 'holding', 'Corriente total', 0.01),
     'distance': (7, 'holding', 'Distancia recorrida', 0.1),
 }
+
+def get_available_ports():
+    """
+    Obtiene la lista de puertos seriales disponibles en el sistema.
+    
+    Returns:
+        list: Lista de nombres de puertos disponibles.
+    """
+    return [port.device for port in serial.tools.list_ports.comports()]
 
 def create_modbus_client():
     """Crea y devuelve un cliente Modbus RTU configurado."""
@@ -78,124 +88,104 @@ def check_connection():
     finally:
         client.close()
 
-def read_registers():
-    """
-    Lee todos los registros definidos en REGISTER_MAP del dispositivo Modbus.
-    
-    Returns:
-        dict: Diccionario con los valores leídos o None si hay un error.
-    """
+def read_registers(retries=3, delay=0.5):
     client = create_modbus_client()
     result = {}
-    
-    try:
-        if not client.connect():
-            logger.error("No se pudo conectar al dispositivo Modbus")
-            return None
-        
-        # Leer coils (valores booleanos)
-        coil_addresses = [reg[0] for name, reg in REGISTER_MAP.items() if reg[1] == 'coil']
-        if coil_addresses:
-            start_address = min(coil_addresses)
-            count = max(coil_addresses) - start_address + 1
-            coil_response = client.read_coils(start_address, count, unit=SLAVE_ID)
-            
-            if not coil_response.isError():
-                for name, reg in REGISTER_MAP.items():
-                    if reg[1] == 'coil':
-                        address = reg[0]
-                        result[name] = coil_response.bits[address - start_address]
-            else:
-                logger.error(f"Error al leer coils: {coil_response}")
-        
-        # Leer holding registers (valores numéricos)
-        holding_addresses = [reg[0] for name, reg in REGISTER_MAP.items() if reg[1] == 'holding']
-        if holding_addresses:
-            start_address = min(holding_addresses)
-            count = max(holding_addresses) - start_address + 1
-            holding_response = client.read_holding_registers(start_address, count, unit=SLAVE_ID)
-            
-            if not holding_response.isError():
-                for name, reg in REGISTER_MAP.items():
-                    if reg[1] == 'holding':
-                        address, _, _, scale = reg
-                        result[name] = holding_response.registers[address - start_address] * scale
-            else:
-                logger.error(f"Error al leer holding registers: {holding_response}")
-        
-        return result
-    
-    except ConnectionException as e:
-        logger.error(f"Error de conexión: {e}")
-        return None
-    except ModbusException as e:
-        logger.error(f"Error de Modbus: {e}")
-        return None
-    except Exception as e:
-        logger.error(f"Error inesperado: {e}")
-        return None
-    finally:
-        client.close()
+
+    for attempt in range(1, retries + 1):
+        try:
+            logger.info(f"Intento {attempt} de lectura Modbus...")
+
+            if not client.connect():
+                logger.warning("No se pudo conectar al dispositivo Modbus")
+                time.sleep(delay)
+                continue
+
+            # Leer coils (booleanos)
+            coil_addresses = [reg[0] for name, reg in REGISTER_MAP.items() if reg[1] == 'coil']
+            if coil_addresses:
+                start = min(coil_addresses)
+                count = max(coil_addresses) - start + 1
+                coil_response = client.read_coils(slave=SLAVE_ID, address=start, count=count)
+
+                if not coil_response.isError():
+                    for name, reg in REGISTER_MAP.items():
+                        if reg[1] == 'coil':
+                            result[name] = coil_response.bits[reg[0] - start]
+                else:
+                    logger.error(f"Error al leer coils: {coil_response}")
+                    continue
+
+            # Leer holding registers (numéricos)
+            holding_addresses = [reg[0] for name, reg in REGISTER_MAP.items() if reg[1] == 'holding']
+            if holding_addresses:
+                start = min(holding_addresses)
+                count = max(holding_addresses) - start + 1
+                holding_response = client.read_holding_registers(slave=SLAVE_ID, address=start, count=count)
+
+                if not holding_response.isError():
+                    for name, reg in REGISTER_MAP.items():
+                        if reg[1] == 'holding':
+                            address, _, _, scale = reg
+                            result[name] = holding_response.registers[address - start] * scale
+                else:
+                    logger.error(f"Error al leer holding registers: {holding_response}")
+                    continue
+
+            client.close()
+            return result
+
+        except Exception as e:
+            logger.error(f"Error en intento {attempt}: {e}")
+            time.sleep(delay)
+
+    client.close()
+    return None
 
 def write_register(register_name, value):
-    """
-    Escribe un valor en un registro específico.
-    
-    Args:
-        register_name (str): Nombre del registro a escribir
-        value: Valor a escribir (booleano para coils, numérico para holding registers)
-    
-    Returns:
-        bool: True si la escritura fue exitosa, False en caso contrario
-    """
     if register_name not in REGISTER_MAP:
         logger.error(f"Registro '{register_name}' no definido")
         return False
-    
+
     client = create_modbus_client()
-    
+
     try:
         if not client.connect():
             logger.error("No se pudo conectar al dispositivo Modbus")
             return False
-        
-        reg_info = REGISTER_MAP[register_name]
-        address = reg_info[0]
-        reg_type = reg_info[1]
-        
+
+        address, reg_type, *_ = REGISTER_MAP[register_name]
         if reg_type == 'coil':
-            # Escribir coil (valor booleano)
             response = client.write_coil(address, bool(value), slave=SLAVE_ID)
         elif reg_type == 'holding':
-            # Escribir holding register (valor numérico)
-            scale = reg_info[3]
+            scale = REGISTER_MAP[register_name][3]
             scaled_value = int(float(value) / scale)
             response = client.write_register(address, scaled_value, slave=SLAVE_ID)
         else:
             logger.error(f"Tipo de registro '{reg_type}' no soportado")
             return False
-        
+
         if response.isError():
             logger.error(f"Error al escribir en el registro: {response}")
             return False
-        
+
         return True
-    
-    except ConnectionException as e:
-        logger.error(f"Error de conexión: {e}")
-        return False
-    except ModbusException as e:
-        logger.error(f"Error de Modbus: {e}")
-        return False
+
     except Exception as e:
         logger.error(f"Error inesperado: {e}")
         return False
+
     finally:
         client.close()
 
 # Para pruebas directas del módulo
 if __name__ == '__main__':
-    print("Verificando conexión...")
+    print("Puertos seriales disponibles:")
+    ports = get_available_ports()
+    for port in ports:
+        print(f" - {port}")
+    
+    print("\nVerificando conexión...")
     status = check_connection()
     print(f"Estado: {status}")
     
