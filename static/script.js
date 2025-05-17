@@ -41,6 +41,20 @@ const units = {
     distance: 'm'
 };
 
+const precisionMap = {
+    reference_speed: 0,
+    actual_speed: 1,
+    motor1_temp: 2,
+    motor2_temp: 2,
+    motor1_current: 3,
+    motor2_current: 3,
+    total_current: 3,
+    distance: 2
+};
+
+let lastDirection = null;
+
+
 // Elementos DOM
 const updateButton = document.getElementById('updateButton');
 const updateButtonMobile = document.getElementById('updateButtonMobile');
@@ -50,28 +64,20 @@ const serialPortSelect = document.getElementById('serial-port');
 const referenceSpeedSelect = document.getElementById('reference-speed');
 const applyConfigButton = document.getElementById('apply-config');
 
-// Inicialización cuando el DOM está listo
 document.addEventListener('DOMContentLoaded', function () {
-    
-     // Cargar puertos seriales disponibles
-     fetchSerialPorts();
-    
-     // Cargar opciones de velocidad de referencia
-     fetchReferenceSpeedOptions();
+    fetchSerialPorts();
+    fetchReferenceSpeedOptions();
+    fetchData(true);  // Carga inicial con toast
 
-    // Cargar datos iniciales
-    fetchData();
-    
-    // Configurar eventos para los botones de actualización
-    updateButton.addEventListener('click', fetchData);
-    updateButtonMobile.addEventListener('click', fetchData);
+    // 🔄 Actualización automática cada 1 segundo (sin toast)
+    setInterval(fetchData, 1000);
 
-    // Configurar evento para el botón de aplicar configuración
+    updateButton.addEventListener('click', () => fetchData(true));
+    updateButtonMobile.addEventListener('click', () => fetchData(true));
     applyConfigButton.addEventListener('click', applyConfiguration);
-    
-    // Configurar eventos para los interruptores
     setupSwitches();
 });
+
 
 
 /**
@@ -267,47 +273,41 @@ function setupSwitches() {
 
 /**
  * Obtiene los datos del servidor y actualiza la interfaz
+ * @param {boolean} showToastOnSuccess - Muestra toast si es true
  */
-async function fetchData() {
-    // Mostrar estado de carga
+async function fetchData(showToastOnSuccess = false) {
     updateButton.disabled = true;
     updateButtonMobile.disabled = true;
-    
+
     try {
         const response = await fetch('/api/get_registers');
-        
+
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
-        // Actualizar el estado global
+
         panelData = data;
-        
-        // Actualizar la interfaz
         updateUI();
-        
-        // Ocultar panel de error si estaba visible
+
         errorPanel.style.display = 'none';
-        
-        // Mostrar notificación de éxito
-        showToast('Datos actualizados correctamente', 'success');
+
+        if (showToastOnSuccess) {
+            showToast('Datos actualizados correctamente', 'success');
+        }
+
     } catch (error) {
         console.error('Error al obtener datos:', error);
-        
-        // Mostrar panel de error
         errorMessage.textContent = error.message || 'Error de conexión con el servidor';
         errorPanel.style.display = 'block';
-        
-        // Mostrar notificación de error
         showToast('Error al actualizar datos', 'error');
     } finally {
-        // Restaurar estado de los botones
         updateButton.disabled = false;
         updateButtonMobile.disabled = false;
     }
 }
+
 
 /**
  * Actualiza un registro en el servidor
@@ -359,24 +359,75 @@ async function updateRegister(register, value, type) {
     }
 }
 
+function formatFloatSmart(value, decimals = 3) {
+    return parseFloat(value.toFixed(decimals)).toString();
+}
+
 /**
  * Actualiza la interfaz de usuario con los datos actuales
  */
 function updateUI() {
-    // Actualizar interruptores booleanos
     for (const [key, value] of Object.entries(panelData)) {
         const switchElement = document.getElementById(`switch-${key}`);
         if (switchElement) {
             switchElement.checked = value;
         }
-        
-        // Actualizar valores numéricos
+
         const valueElement = document.getElementById(key);
         if (valueElement && typeof value === 'number') {
-            valueElement.textContent = `${value} ${units[key] || ''}`;
+            const decimals = precisionMap[key] !== undefined ? precisionMap[key] : 3;
+            const formatted = formatFloatSmart(value, decimals);
+            valueElement.textContent = `${formatted} ${units[key] || ''}`;
         }
     }
+
+    // Indicadores de conexión
+    ['esp32_modbus', 'esp32_sim_internet'].forEach((statusKey) => {
+        const indicator = document.getElementById(`status-${statusKey}`);
+        if (indicator) {
+            if (panelData[statusKey]) {
+                indicator.textContent = 'Conectado';
+                indicator.classList.add('connected');
+            } else {
+                indicator.textContent = 'Desconectado';
+                indicator.classList.remove('connected');
+            }
+        }
+    });
+
+    //Ícono de dirección
+    const directionIcon = document.getElementById('direction-icon');
+    if (directionIcon) {
+        const isUp = panelData.direction;
+        const isMoving = panelData.move;
+
+        // Detectar si la dirección ha cambiado respecto al estado anterior
+        if (lastDirection !== null && lastDirection !== isUp) {
+            directionIcon.classList.add('bounce');
+
+            // Eliminar la clase después de la animación para poder reutilizarla
+            setTimeout(() => {
+                directionIcon.classList.remove('bounce');
+            }, 300); // igual al duration de la animación
+        }
+
+        lastDirection = isUp;
+
+        // Mantener siempre arrow-up, rotarlo según dirección
+        directionIcon.setAttribute('data-lucide', 'arrow-up');
+
+        lucide.createIcons({ icons: { 'arrow-up': {} } });
+
+        // Rotación visual
+        directionIcon.style.transform = isUp ? 'rotate(0deg)' : 'rotate(180deg)';
+
+        // Color según movimiento
+        directionIcon.classList.remove('active', 'inactive');
+        directionIcon.classList.add(isMoving ? 'active' : 'inactive');
+    }
+
 }
+
 
 /**
  * Muestra una notificación toast

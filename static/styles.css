@@ -1459,3 +1459,39 @@ a:hover {
     font-weight: 700;
     color: var(--primary);
   }
+
+  .status-indicator {
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: white;
+    background-color: var(--danger);
+}
+
+.status-indicator.connected {
+    background-color: var(--success);
+}
+
+.direction-icon {
+    margin-left: 0.75rem;
+    transition: transform 0.4s ease, color 0.3s ease;
+}
+
+.direction-icon.active {
+    color: var(--success);
+}
+
+.direction-icon.inactive {
+    color: var(--text-secondary);
+}
+
+@keyframes bounce-pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.direction-icon.bounce {
+    animation: bounce-pop 0.3s ease;
+}

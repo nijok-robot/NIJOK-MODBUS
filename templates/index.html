@@ -198,6 +198,7 @@
                         <div class="switch-control">
                             <div class="info-item">
                                 <span class="info-label">Dirección</span>
+                                <i id="direction-icon" data-lucide="arrow-up" class="icon direction-icon"></i>
                                 <label class="switch">
                                     <input type="checkbox" id="switch-direction" data-register="direction">
                                     <span class="slider round"></span>
@@ -242,10 +243,7 @@
                         <div class="switch-control">
                             <div class="info-item">
                                 <span class="info-label">ESP32_ModBUS</span>
-                                <label class="switch">
-                                    <input type="checkbox" id="switch-esp32_modbus" data-register="esp32_modbus">
-                                    <span class="slider round"></span>
-                                </label>
+                                <span id="status-esp32_modbus" class="status-indicator">Desconectado</span>
                             </div>
                         </div>
                         
@@ -253,10 +251,7 @@
                         <div class="switch-control">
                             <div class="info-item">
                                 <span class="info-label">ESP32_SIM_Internet</span>
-                                <label class="switch">
-                                    <input type="checkbox" id="switch-esp32_sim_internet" data-register="esp32_sim_internet">
-                                    <span class="slider round"></span>
-                                </label>
+                                <span id="status-esp32_sim_internet" class="status-indicator">Desconectado</span>
                             </div>
                         </div>
                     </div>
