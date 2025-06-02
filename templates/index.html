@@ -152,7 +152,7 @@
                 <!-- Panel de configuración Modbus -->
                 <div class="panel full-width config-panel">
                     <div class="panel-title">
-                        <i data-lucide="settings" class="icon"></i>
+                        <i data-lucide="settings" class="icon separacion-icono"></i>
                         <span>Configuración de Conexión</span>
                     </div>
                     <div class="config-grid">
@@ -262,7 +262,7 @@
                     <!-- Velocidad -->
                     <div class="panel">
                         <div class="panel-title">
-                            <i data-lucide="gauge" class="icon"></i>
+                            <i data-lucide="gauge" class="icon separacion-icono"></i>
                             <span>Velocidad</span>
                         </div>
                         <div class="status-panels">
@@ -280,7 +280,7 @@
                     <!-- Temperatura -->
                     <div class="panel">
                         <div class="panel-title">
-                            <i data-lucide="thermometer" class="icon"></i>
+                            <i data-lucide="thermometer" class="icon separacion-icono"></i>
                             <span>Temperatura</span>
                         </div>
                         <div class="status-panels">
@@ -298,7 +298,7 @@
                     <!-- Corriente -->
                     <div class="panel">
                         <div class="panel-title">
-                            <i data-lucide="zap" class="icon"></i>
+                            <i data-lucide="zap" class="icon separacion-icono"></i>
                             <span>Corriente</span>
                         </div>
                         <div class="status-panels">
@@ -317,15 +317,24 @@
                         </div>
                     </div>
                     
-                    <!-- Distancia -->
+                    <!-- Distancia + Consumo electrico -->
                     <div class="panel">
                         <div class="panel-title">
-                            <i data-lucide="navigation" class="icon"></i>
-                            <span>Distancia</span>
+                            <i data-lucide="navigation" class="icon separacion-icono"></i>
+                            <span> Distancia</span>
                         </div>
                         <div class="data-card">
-                            <div class="panel-title">Distancia recorrida</div>
+                            <div class="panel-title"> Distancia recorrida</div>
                             <div id="distance" class="value">0 m</div>
+                        </div>
+                        <p>  </p>
+                        <div class="panel-title">
+                            <i data-lucide="battery" class="icon separacion-icono"></i>
+                            <span> Consumo Eléctrico</span>
+                        </div>
+                        <div class="data-card">
+                            <div class="panel-title"> Consumo por minuto</div>
+                            <div id="power_consumption" class="value">0 W/min</div>
                         </div>
                     </div>
                 </div>

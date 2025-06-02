@@ -19,8 +19,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Configuración del cliente Modbus
-SERIAL_PORT = 'COM7'  # Cambiar según el puerto serie utilizado
-BAUDRATE = 115200
+SERIAL_PORT = 'COM11'  # Cambiar según el puerto serie utilizado
+BAUDRATE = 9600
 SLAVE_ID = 1  # ID del esclavo Modbus
 
 # Mapeo de registros Modbus
@@ -60,9 +60,9 @@ def create_modbus_client():
         port=SERIAL_PORT,
         baudrate=BAUDRATE,
         bytesize=8,
-        parity='N',
+        parity='E',
         stopbits=1,
-        timeout=1
+        timeout=1,
     )
     return client
 

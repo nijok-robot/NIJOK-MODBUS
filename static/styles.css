@@ -1495,3 +1495,21 @@ a:hover {
 .direction-icon.bounce {
     animation: bounce-pop 0.3s ease;
 }
+
+.separacion-icono {
+  margin-right: 12px; /* espacio por defecto (pantallas normales) */
+}
+
+/* Pantallas pequeñas (teléfonos) */
+@media (max-width: 600px) {
+  .separacion-icono {
+    margin-right: 6px;
+  }
+}
+
+/* Pantallas muy pequeñas (menos de 400px) */
+@media (max-width: 400px) {
+  .separacion-icono {
+    margin-right: 4px;
+  }
+}
