@@ -31,8 +31,8 @@ let connectionConfig = {
 
 // Unidades para los valores numéricos
 const units = {
-    reference_speed: 'RPM',
-    actual_speed: 'RPM',
+    reference_speed: 'mm/s',
+    actual_speed: 'mm/s',
     motor1_temp: '°C',
     motor2_temp: '°C',
     motor1_current: 'A',

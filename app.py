@@ -25,7 +25,7 @@ default_data = {
     "distance": 0
 }
 
-reference_speed_options = [0, 100, 200, 300, 400, 500, 750, 1000, 1500, 2000]
+reference_speed_options = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 70, 100]
 
 @app.route('/')
 def index():
