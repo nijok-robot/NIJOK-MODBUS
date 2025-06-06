@@ -66,6 +66,20 @@ def create_modbus_client():
     )
     return client
 
+def limpiar_buffer(client):
+    """
+    Limpia los búferes de entrada y salida del cliente Modbus para evitar residuos de datos.
+    """
+    try:
+        if client.socket:
+            client.socket.reset_input_buffer()
+            client.socket.reset_output_buffer()
+            logger.debug("Búfer serial limpiado correctamente.")
+    except Exception as e:
+        logger.warning(f"No se pudo limpiar el buffer serial: {e}")
+
+
+
 def check_connection():
     """
     Verifica la conexión con el dispositivo Modbus.
@@ -100,6 +114,8 @@ def read_registers(retries=3, delay=0.5):
                 logger.warning("No se pudo conectar al dispositivo Modbus")
                 time.sleep(delay)
                 continue
+            
+            limpiar_buffer(client)
 
             # Leer coils (booleanos)
             coil_addresses = [reg[0] for name, reg in REGISTER_MAP.items() if reg[1] == 'coil']
@@ -153,6 +169,7 @@ def write_register(register_name, value):
         if not client.connect():
             logger.error("No se pudo conectar al dispositivo Modbus")
             return False
+        limpiar_buffer(client)
 
         address, reg_type, *_ = REGISTER_MAP[register_name]
         if reg_type == 'coil':
