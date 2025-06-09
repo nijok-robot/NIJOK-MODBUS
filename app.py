@@ -22,7 +22,11 @@ default_data = {
     "motor1_current": 0,
     "motor2_current": 0,
     "total_current": 0,
-    "distance": 0
+    "distance": 0,
+    # Nuevos campos para consumo eléctrico y voltajes
+    "power_consumption": 0,
+    "voltage_24v": 0,
+    "voltage_5v": 0
 }
 
 reference_speed_options = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 70, 100]
@@ -63,6 +67,13 @@ def set_register():
 
         if not register or value is None or not value_type:
             return jsonify({"error": "Faltan parámetros requeridos"}), 400
+
+        # Verificar que no se intenten modificar campos de solo lectura
+        readonly_fields = ['power_consumption', 'voltage_24v', 'voltage_5v']
+        if register in readonly_fields:
+            return jsonify({
+                "error": f"El campo {register} es de solo lectura y no puede ser modificado"
+            }), 400
 
         if value_type == 'boolean':
             value = bool(value)

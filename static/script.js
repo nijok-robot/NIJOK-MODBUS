@@ -5,54 +5,64 @@
  * la comunicación con el backend Flask a través de API REST.
  */
 
-// Estado global de los datos
+/// Estado global de los datos
 let panelData = {
-    direction: false,
-    move: false,
-    emergency: false,
-    manual: false,
-    esp32_modbus: false,
-    esp32_sim_internet: false,
-    reference_speed: 0,
-    actual_speed: 0,
-    motor1_temp: 0,
-    motor2_temp: 0,
-    motor1_current: 0,
-    motor2_current: 0,
-    total_current: 0,
-    distance: 0
-};
+  direction: false,
+  move: false,
+  emergency: false,
+  manual: false,
+  esp32_modbus: false,
+  esp32_sim_internet: false,
+  reference_speed: 0,
+  actual_speed: 0,
+  motor1_temp: 0,
+  motor2_temp: 0,
+  motor1_current: 0,
+  motor2_current: 0,
+  total_current: 0,
+  distance: 0,
+  // Nuevos campos para consumo eléctrico y voltajes
+  power_consumption: 0,
+  voltage_24v: 0,
+  voltage_5v: 0,
+}
 
 // Configuración de conexión
-let connectionConfig = {
-    serialPort: '',
-    referenceSpeed: 0
-};
+const connectionConfig = {
+  serialPort: "",
+  referenceSpeed: 0,
+}
 
 // Unidades para los valores numéricos
 const units = {
-    reference_speed: 'mm/s',
-    actual_speed: 'mm/s',
-    motor1_temp: '°C',
-    motor2_temp: '°C',
-    motor1_current: 'A',
-    motor2_current: 'A',
-    total_current: 'A',
-    distance: 'm'
-};
+  reference_speed: "mm/s",
+  actual_speed: "mm/s",
+  motor1_temp: "°C",
+  motor2_temp: "°C",
+  motor1_current: "A",
+  motor2_current: "A",
+  total_current: "A",
+  distance: "m",
+  power_consumption: "W/min",
+  voltage_24v: "V",
+  voltage_5v: "V",
+}
 
 const precisionMap = {
-    reference_speed: 0,
-    actual_speed: 1,
-    motor1_temp: 2,
-    motor2_temp: 2,
-    motor1_current: 3,
-    motor2_current: 3,
-    total_current: 3,
-    distance: 2
-};
+  reference_speed: 0,
+  actual_speed: 1,
+  motor1_temp: 2,
+  motor2_temp: 2,
+  motor1_current: 3,
+  motor2_current: 3,
+  total_current: 3,
+  distance: 2,
+  power_consumption: 2,
+  voltage_24v: 2,
+  voltage_5v: 2,
+}
 
-let lastDirection = null;
+let lastDirection = null
 
 
 // Elementos DOM

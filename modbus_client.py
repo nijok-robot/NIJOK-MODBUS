@@ -43,6 +43,10 @@ REGISTER_MAP = {
     'motor2_current': (5, 'holding', 'Corriente motor 2', 0.01),
     'total_current': (6, 'holding', 'Corriente total', 0.01),
     'distance': (7, 'holding', 'Distancia recorrida', 0.1),
+    # Nuevos registros para consumo eléctrico y voltajes
+    'power_consumption': (8, 'holding', 'Consumo eléctrico', 0.01),
+    'voltage_24v': (9, 'holding', 'Voltaje línea 24V', 0.01),
+    'voltage_5v': (10, 'holding', 'Voltaje línea 5V', 0.01),
 }
 
 def get_available_ports():
@@ -77,8 +81,6 @@ def limpiar_buffer(client):
             logger.debug("Búfer serial limpiado correctamente.")
     except Exception as e:
         logger.warning(f"No se pudo limpiar el buffer serial: {e}")
-
-
 
 def check_connection():
     """
