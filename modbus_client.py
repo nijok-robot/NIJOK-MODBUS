@@ -47,6 +47,8 @@ REGISTER_MAP = {
     'power_consumption': (8, 'holding', 'Consumo eléctrico', 0.01),
     'voltage_24v': (9, 'holding', 'Voltaje línea 24V', 0.01),
     'voltage_5v': (10, 'holding', 'Voltaje línea 5V', 0.01),
+    'duty_motor1': (11, 'holding', 'Voltaje línea 24V', 1),
+    'duty_motor2': (12, 'holding', 'Voltaje línea 5V', 1),
 }
 
 def get_available_ports():

@@ -26,7 +26,9 @@ default_data = {
     # Nuevos campos para consumo eléctrico y voltajes
     "power_consumption": 0,
     "voltage_24v": 0,
-    "voltage_5v": 0
+    "voltage_5v": 0,
+    "duty_motor1": 0,
+    "duty_motor2": 0
 }
 
 reference_speed_options = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 70, 100]

@@ -25,6 +25,8 @@ let panelData = {
   power_consumption: 0,
   voltage_24v: 0,
   voltage_5v: 0,
+  duty_motor1: 0,
+  duty_motor2: 0,
 }
 
 // Configuración de conexión
@@ -46,6 +48,8 @@ const units = {
   power_consumption: "W/min",
   voltage_24v: "V",
   voltage_5v: "V",
+  duty_motor1: " ",
+  duty_motor2: " ",
 }
 
 const precisionMap = {
@@ -60,6 +64,8 @@ const precisionMap = {
   power_consumption: 2,
   voltage_24v: 2,
   voltage_5v: 2,
+  duty_motor1: 0,
+  duty_motor2: 0,
 }
 
 let lastDirection = null
